@@ -1,12 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os
-import itertools
-from statsmodels.distributions.empirical_distribution import ECDF
-from tqdm import tqdm
-
-import karhunen_loeve_solver
 
 class Analysis:
 
@@ -138,16 +130,17 @@ class Analysis:
         # Compute the displacement vector
         self.displacements = np.dot(np.linalg.inv(self.globalStiffness), self.forces)
         return self.displacements
+    
+if __name__ == '__main__':
 
 
-run_FEM = Analysis(n_elemX=40, n_elemY=10, lenX=4, lenY=1, load=10, poisson=0.3, thickness=0.2, n_simulations=10)
+    run_FEM = Analysis(n_elemX=40, n_elemY=10, lenX=4, lenY=1, load=10, poisson=0.3, thickness=0.2, n_simulations=10)
 
-run_FEM.rectangular_mesh()
-run_FEM.get_dofs()
-run_FEM.local_stiffness_matrix(young_mod=1e5)
-run_FEM.get_global_stiffness()
-run_FEM.set_boundary_conditions()
-run_FEM.set_force_vector()
+    run_FEM.rectangular_mesh()
+    run_FEM.get_dofs()
+    run_FEM.local_stiffness_matrix(young_mod=1e5)
+    run_FEM.get_global_stiffness()
+    run_FEM.set_boundary_conditions()
+    run_FEM.set_force_vector()
 
-print(run_FEM.get_displacements()[81]) # the 81-st dof corresponds to the vertical displacement of right bottom corner of the structure
-
+    print(run_FEM.get_displacements()[81]) # the 81-st dof corresponds to the vertical displacement of right bottom corner of the structure
