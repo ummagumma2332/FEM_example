@@ -18,7 +18,7 @@ class Analysis:
 
     def rectangular_mesh(self):
         """  
-        Method for discretizing the domain using quadrilateral elements. Returns a 2d list of shape (num_of_elements, nodes_of_element)
+        Method for discretizing the domain using quadrilateral elements. Returns a 2d list of shape (num_of_elements, 4)
         (from book 'MATLAB Codes for Finite Element Analysis' by Ferreira, António J. M., Fantuzzi, Nicholas)
         """
         j = 1
@@ -124,14 +124,16 @@ class Analysis:
 
     def set_boundary_conditions(self):
         """
-        Returns a list which contains the dofs of the left edge of the beam
+        Returns a list which contains the dofs of the left edge of the beam.
+        If we want to set different boundary conditions, we should adjust the content of this list to include the dofs we want to constrain.
         """
         self.constrained_dofs = np.unique(self.elem_dofs[::self.n_elemX][:, [0, 1, -2, -1]])
         return self.constrained_dofs
 
     def set_force_vector(self):
         """
-        Returns the forces field
+        Returns the forces field. In this example the load is applied to the vertical direction (negative-y) of the upper right node (last dof of the system).
+        If we want to change the loading condition we should adjust the content of this list to include the dofs we want to carry loads.
         """
         # Define the external force vector
         self.forces = np.zeros(self.g_dofs)
@@ -139,15 +141,17 @@ class Analysis:
         return self.forces
 
     def get_displacements(self): 
-        # For each constrained dof i, set the elements of i-row & i-column of the global stiffness matrix to zero
-        # Assign a very large positive number to the i-diagonal element 
+        """
+        Returns the displacement field
+        """
+         
         for i in self.constrained_dofs:  
-            self.globalStiffness[:, i] = 0
-            self.globalStiffness[i, :] = 0
-            self.globalStiffness[i, i] = 1e10
+            self.globalStiffness[:, i] = 0    # For each constrained dof i, set the elements of i-row & i-column
+            self.globalStiffness[i, :] = 0    # of the global stiffness matrix to zero
+            self.globalStiffness[i, i] = 1e10 # Assign a very large positive number to the i-diagonal element
 
         # Compute the displacement vector
-        self.displacements = np.dot(np.linalg.inv(self.globalStiffness), self.forces)
+        self.displacements = np.dot(np.linalg.inv(self.globalStiffness), self.forces) # U = K^-1 * P
         return self.displacements
     
 if __name__ == '__main__':
