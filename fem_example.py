@@ -209,7 +209,7 @@ class Analysis:
             right_bottom_node_dispY.append((displs[81]))
 
         sns.distplot(right_bottom_node_dispY, bins=10)
-        plt.savefig(os.path.join(os.getcwd(), "pdf+hist.png"))
+        plt.savefig(os.path.join(os.getcwd(), f"pdf_of_{self.n_simulations}_system_evaluations.png"))
 
 
 
