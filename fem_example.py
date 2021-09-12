@@ -17,7 +17,10 @@ class Analysis:
         self.g_dofs = 2 * (n_elemX + 1) * (n_elemY + 1)  # global degrees of freedom
 
     def rectangular_mesh(self):
-
+        """  
+        Method for discretizing the domain using quadrilateral elements. Returns a 2d list of shape (num_of_elements, nodes_of_element)
+        (from book 'MATLAB Codes for Finite Element Analysis' by Ferreira, António J. M., Fantuzzi, Nicholas)
+        """
         j = 1
         i = 1
         i1 = 0
@@ -43,7 +46,9 @@ class Analysis:
 
 
     def get_dofs(self):
-        
+        '''
+        Returns a list with the dofs of an element
+        '''
         for j in range(len(self.element_nodes)):
             dofs = []
             for i in self.element_nodes[j]:
@@ -56,7 +61,9 @@ class Analysis:
 
         
     def local_stiffness_matrix(self, young_mod):
-    
+    """
+    Calculates the stiffness matrix of a quadrilateral element
+    """    
         a = self.lenX / (2 * self.n_elemX)
         b = self.lenY / (2 * self.n_elemY)
 
@@ -88,6 +95,9 @@ class Analysis:
          
 
     def get_element_global_stiffness(self, element_dof):
+        """
+        For a given element (defined by its dofs) the method returns its global stiffness matrix
+        """
 
         self.k_element_glob = np.zeros((self.g_dofs, self.g_dofs))
         c1 = 0
@@ -101,6 +111,9 @@ class Analysis:
         return self.k_element_glob
 
     def get_global_stiffness(self):
+        """
+        Returns the global stiffness matrix of the system
+        """
 
         self.globalStiffness = np.zeros((self.g_dofs, self.g_dofs))
         for el in range(len(self.elem_dofs)):
@@ -110,10 +123,16 @@ class Analysis:
         return self.globalStiffness
 
     def set_boundary_conditions(self):
+        """
+        Returns a list which contains the dofs of the left edge of the beam
+        """
         self.constrained_dofs = np.unique(self.elem_dofs[::self.n_elemX][:, [0, 1, -2, -1]])
         return self.constrained_dofs
 
     def set_force_vector(self):
+        """
+        Returns the forces field
+        """
         # Define the external force vector
         self.forces = np.zeros(self.g_dofs)
         self.forces[-1] = -self.load      # the load is applied to the last dof - direction to negative y
