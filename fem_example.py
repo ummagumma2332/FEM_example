@@ -220,7 +220,7 @@ class Analysis:
 
 
 run_FEM = Analysis(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2, n_simulations=500)
-print("================ IMPLEMENTATION OF DETERMINISTIC FEM ================:\nDisplacement of right bottom node alog y-axis (m):")
+print("================ IMPLEMENTATION OF DETERMINISTIC FEM ================:\nDisplacement of right bottom node along y-axis (m):")
 run_FEM.solve_deterministic_FEM(young_modulus=1e5, applied_force=10)
 
 print("\n================ IMPLEMENTATION OF STOCHASTIC FEM ================:")
