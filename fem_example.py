@@ -13,21 +13,22 @@ from tqdm import tqdm
 
 import karhunen_loeve_solver
 
-class Analysis:
+import warnings
+warnings.filterwarnings('ignore')
 
-    def __init__(self, lenX, lenY, n_elemX, n_elemY, poisson, thickness, n_simulations):
+class FiniteElementsAnalysis:
+
+    def __init__(self, lenX, lenY, n_elemX, n_elemY, poisson, thickness):
 
         self.lenX = lenX                     # length of the beam
         self.lenY = lenY                     # hight of the beam
         self.n_elemX = n_elemX               # number of elements along x-axis
         self.n_elemY = n_elemY               # number of elements along y-axis
-        # self.load = load                     # applied force
         self.poisson = poisson               # poisson ratio
         self.thickness = thickness           # thickness of beam
-        self.n_simulations = n_simulations   # number of simulations for the monte carlo 
         self.element_nodes = []
         self.elem_dofs = []
-        self.g_dofs = 2 * (n_elemX + 1) * (n_elemY + 1)  # global degrees of freedom
+        self.g_dofs = 2 * (n_elemX + 1) * (n_elemY + 1) # global degrees of freedom
 
     def rectangular_mesh(self):
         """  
@@ -52,11 +53,7 @@ class Analysis:
                 self.element_nodes.append([i1, i2, i3, i4])
             i1 += 1
             i2 += 1
-
         self.element_nodes = np.array(self.element_nodes)
-
-        return self.element_nodes
-
 
     def get_dofs(self):
         '''
@@ -67,52 +64,42 @@ class Analysis:
             for i in self.element_nodes[j]:
                 dofs.append(i*2-1)
                 dofs.append(i*2)
-            self.elem_dofs.append(dofs)  
+            self.elem_dofs.append(dofs)
         self.elem_dofs = np.array(self.elem_dofs) - 1
-
-        return self.elem_dofs
-
-        
-    def local_stiffness_matrix(self, young_mod):
-        """
-        Calculates the stiffness matrix of a quadrilateral element
-        """    
-        a = self.lenX / (2 * self.n_elemX)
-        b = self.lenY / (2 * self.n_elemY)
-
-
-        r = a/b
-        rho = (1 - self.poisson)/2
-        mu = (1 + self.poisson) * 3/2
-        lamda = (1 - 3*self.poisson)/2
-        k = np.zeros((8, 8))
-        
-        k[0, 0] = k[2, 2] = k[4, 4] = k[6, 6] = 4/r + 4*rho*r
-        k[1, 1] = k[3, 3] = k[5, 5] = k[7, 7] = 4*r + 4*rho/r
-        
-        k[1, 0] = k[0, 1] = k[7, 2] = k[2, 7] = k[6, 3] = k[3, 6] = k[5, 4] = k[4, 5] = mu
-        k[3, 0] = k[0, 3] = k[6, 1] = k[1, 6] = k[5, 2] = k[2, 5] = k[7, 4] = k[4, 7] = -lamda
-        k[5, 0] = k[0, 5] = k[4, 1] = k[1, 4] = k[3, 2] = k[2, 3] = k[7, 6] = k[6, 7] = -mu
-        k[7, 0] = k[0, 7] = k[1, 2] = k[2, 1] = k[4, 3] = k[3, 4] = k[6, 5] = k[5, 6] = lamda
-        
-        k[2, 0] = k[0, 2] = k[6, 4] = k[4, 6] = -4/r + 2*rho*r
-        k[4, 0] = k[0, 4] = k[6, 2] = k[2, 6] = -2/r - 2*rho*r
-        k[6, 0] = k[0, 6] = k[4, 2] = k[2, 4] = 2/r - 4*rho*r
-        k[3, 1] = k[1, 3] = k[7, 5] = k[5, 7] = 2*r - 4*rho/r
-        k[5, 1] = k[1, 5] = k[7, 3] = k[3, 7] = -2*r - 2*rho/r
-        k[7, 1] = k[1, 7] = k[5, 3] = k[3, 5] = -4*r + 2*rho/r
-
-        self.k_element_local = young_mod * self.thickness / (12 * (1 - self.poisson**2)) * k
-
-        return self.k_element_local
-         
-
-    def get_element_global_stiffness(self, element_dof, E=1e5):
+    
+    def get_element_global_stiffness(self, element_dof, E):
         """
         For a given element (defined by its dofs) the method returns its global stiffness matrix
         """
+        def local_stiffness_matrix(self):
+            """
+            Calculates the stiffness matrix of a quadrilateral element
+            """
+            a = self.lenX / (2 * self.n_elemX)
+            b = self.lenY / (2 * self.n_elemY)
+            r = a/b
+            rho = (1 - self.poisson)/2
+            mu = (1 + self.poisson) * 3/2
+            lamda = (1 - 3*self.poisson)/2
 
-        k_element_local = self.local_stiffness_matrix(young_mod=E)
+            k = np.zeros((8, 8))
+
+            k[0, 0] = k[2, 2] = k[4, 4] = k[6, 6] = 4/r + 4*rho*r
+            k[1, 1] = k[3, 3] = k[5, 5] = k[7, 7] = 4*r + 4*rho/r
+            k[2, 0] = k[0, 2] = k[6, 4] = k[4, 6] = -4/r + 2*rho*r
+            k[4, 0] = k[0, 4] = k[6, 2] = k[2, 6] = -2/r - 2*rho*r
+            k[6, 0] = k[0, 6] = k[4, 2] = k[2, 4] = 2/r - 4*rho*r
+            k[3, 1] = k[1, 3] = k[7, 5] = k[5, 7] = 2*r - 4*rho/r
+            k[5, 1] = k[1, 5] = k[7, 3] = k[3, 7] = -2*r - 2*rho/r
+            k[7, 1] = k[1, 7] = k[5, 3] = k[3, 5] = -4*r + 2*rho/r
+            k[1, 0] = k[0, 1] = k[7, 2] = k[2, 7] = k[6,3] = k[3, 6] = k[5, 4] = k[4, 5] = mu
+            k[3, 0] = k[0, 3] = k[6, 1] = k[1, 6] = k[5,2] = k[2, 5] = k[7, 4] = k[4, 7] = -lamda
+            k[5, 0] = k[0, 5] = k[4, 1] = k[1, 4] = k[3,2] = k[2, 3] = k[7, 6] = k[6, 7] = -mu
+            k[7, 0] = k[0, 7] = k[1, 2] = k[2, 1] = k[4,3] = k[3, 4] = k[6, 5] = k[5, 6] = lamda
+
+            return E * self.thickness / (12 * (1 - self.poisson**2)) * k
+
+        k_element_local = local_stiffness_matrix(self)
         self.k_element_glob = np.zeros((self.g_dofs, self.g_dofs))
         c1 = 0
         for i in element_dof:
@@ -124,17 +111,14 @@ class Analysis:
 
         return self.k_element_glob
 
-    def get_global_stiffness(self):
+    def get_global_stiffness(self, young_modulus):
         """
-        Returns the global stiffness matrix of the system
+        Returns the global stiffness matrix of the system. But first the global stiffness matrix of each element must be calculated
         """
-
         self.global_stiffness = np.zeros((self.g_dofs, self.g_dofs))
         for el in range(len(self.elem_dofs)):
-            element_global_stiffness = self.get_element_global_stiffness(self.elem_dofs[el])
+            element_global_stiffness = self.get_element_global_stiffness(element_dof=self.elem_dofs[el], E=young_modulus)
             self.global_stiffness += element_global_stiffness
-
-        return self.global_stiffness
 
     def set_boundary_conditions(self):
         """
@@ -142,90 +126,99 @@ class Analysis:
         If we want to set different boundary conditions, we should adjust the content of this list to include the dofs we want to constrain.
         """
         self.constrained_dofs = np.unique(self.elem_dofs[::self.n_elemX][:, [0, 1, -2, -1]])
-        return self.constrained_dofs
 
-    def set_force_vector(self, load=10):
+    def set_force_vector(self, load):
         """
         Returns the forces field. In this example the load is applied to the vertical direction (negative-y) of the upper right node (last dof of the system).
         If we want to change the loading condition we should adjust the content of this list to include the dofs we want to carry loads.
         """
-        # Define the external force vector
-        self.forces = np.zeros(self.g_dofs)
-        self.forces[-1] = -load      # the load is applied to the last dof - direction to negative y
-        return self.forces
+        self.forces = np.zeros(self.g_dofs) # Define the external force vector
+        self.forces[-1] = -load             # the load is applied to the last dof - direction to negative y
 
-    def get_displacements(self): 
+    def get_displacements(self):
         """
         Returns the displacement field
         """
-        global_stiffness = self.get_global_stiffness()
-        for i in self.constrained_dofs:  
-            global_stiffness[:, i] = 0    # For each constrained dof i, set the elements of i-row & i-column
-            global_stiffness[i, :] = 0    # of the global stiffness matrix to zero
-            global_stiffness[i, i] = 1e10 # Assign a very large positive number to the i-diagonal element
+        for i in self.constrained_dofs:               # For each constrained dof i, set the elements of i-row & i-column
+            self.global_stiffness[:, i] = 0           # of the global stiffness matrix to zero
+            self.global_stiffness[i, :] = 0           # Assign a very large positive number to the i-diagonal element
+            self.global_stiffness[i, i] = 1e10
 
         # Compute the displacement vector
-        self.displacements = np.dot(np.linalg.inv(global_stiffness), self.forces) # U = K^-1 * P
-        return self.displacements
+        self.displacements = np.dot(np.linalg.inv(self.global_stiffness), self.forces)  # U = K^-1 * P
+        print(f"Displacement of the bottom right corner of the beam (m): {self.displacements[81]}")
 
-    def solve_deterministic_FEM(self, young_modulus, applied_force):
-        
-        self.rectangular_mesh()
-        self.get_dofs()
-        self.local_stiffness_matrix(young_mod=young_modulus)
-        self.get_global_stiffness()
-        self.set_boundary_conditions()
-        self.set_force_vector(load=applied_force)
 
-        displacements = self.get_displacements()
-        print(displacements[81]) # the 81-st dof corresponds to the vertical displacement of right bottom corner of the structure
+class MonteCarloSimulation(FiniteElementsAnalysis):
 
+    def __init__(self, lenX, lenY, n_elemX, n_elemY, poisson, thickness, n_sim):
+        super().__init__(lenX, lenY, n_elemX, n_elemY, poisson, thickness)
+        self.n_sim = n_sim  # number of simulations
+
+    def karhunen_loeve(self):
+        return karhunen_loeve_solver.run_KL(M=self.n_sim)
+
+    def get_load(self):
+        return np.random.normal(10, 2, self.n_sim)
 
     def run_MonteCarlo(self):
 
-        E_kl = karhunen_loeve_solver.run_KL(M=self.n_simulations)
-
         right_bottom_node_dispY = []
-        load = np.random.normal(10, 2, self.n_simulations) # the applied force follows a normal distribution: N ~ (10, 2)
-
+        E_kl = self.karhunen_loeve()
+        loads = self.get_load()
         print("\nRunning Finite Element Analysis for each realization ...")
         for r in tqdm(range(len(E_kl))):
-            # print("Running Finite Element Analysis for realization no. {} of {}".format(r+1, n_realizations))
             realization = E_kl[r]
 
             el = 0
-            k_global = np.zeros((self.g_dofs, self.g_dofs))
-
+            global_stiffness = np.zeros((self.g_dofs, self.g_dofs))
             for el, i in enumerate(itertools.cycle(range(len(realization)))):
                 
                 k_element_global = self.get_element_global_stiffness(element_dof=self.elem_dofs[el], E=realization[i])
-                k_global += k_element_global
+                global_stiffness += k_element_global
                 if el == self.elem_dofs.shape[0] - 1:
                     break
-
-
+            
             self.set_boundary_conditions()
-            self.set_force_vector(load=load[r])
+            self.set_force_vector(load=loads[r])
 
-            # The displacement of the right bottom node along
-            # the y-direction corresponds to the 81-st dof. (zero-based counting)
-            # rightBottomNodeDispY = displacements[2*(n_elemX+1)-1]
 
-            displs = self.get_displacements()
-            right_bottom_node_dispY.append((displs[81]))
+            for i in self.constrained_dofs:          # For each constrained dof i, set the elements of i-row & i-column
+                global_stiffness[:, i] = 0           # of the global stiffness matrix to zero
+                global_stiffness[i, :] = 0           # Assign a very large positive number to the i-diagonal element
+                global_stiffness[i, i] = 1e10
+
+            # Compute the displacement vector
+            displacements = np.dot(np.linalg.inv(global_stiffness), self.forces)  # U = K^-1 * P
+            right_bottom_node_dispY.append((displacements[81]))
+
 
         sns.distplot(right_bottom_node_dispY, bins=10)
-        plt.savefig(os.path.join(os.getcwd(), f"pdf_of_{self.n_simulations}_system_evaluations.png"))
+        plt.savefig(os.path.join(os.getcwd(), f"pdf_of_{self.n_sim}_system_evaluations.png"))
+        with open("node's_vertical_displacements.txt", 'w') as f:
+            for item in right_bottom_node_dispY:
+                f.write("%s\n" % item)
 
 
-def main():
-    
-    run_FEM = Analysis(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2, n_simulations=500)
-    print("================ IMPLEMENTATION OF DETERMINISTIC FEM ================:\nDisplacement of right bottom node along y-axis (m):")
-    run_FEM.solve_deterministic_FEM(young_modulus=1e5, applied_force=10)
 
-    print("\n================ IMPLEMENTATION OF STOCHASTIC FEM ================:")
-    run_FEM.run_MonteCarlo()
-    
 if __name__ == '__main__':
-    main()
+
+    inp = input("Press 0 to run the deterministic problem or 1 for the stochastic...\n")
+    if inp == str(0):
+        fea = FiniteElementsAnalysis(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2)
+
+        fea.rectangular_mesh()
+        fea.get_dofs()
+        fea.get_global_stiffness(young_modulus=1e5)
+        fea.set_boundary_conditions()
+        fea.set_force_vector(load=10)
+        fea.get_displacements()
+
+    elif inp == str(1):
+        mc = MonteCarloSimulation(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2, n_sim=500)
+
+        mc.rectangular_mesh()
+        mc.get_dofs()
+        mc.run_MonteCarlo()
+    else:
+        print("Invalid input")
