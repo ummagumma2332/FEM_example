@@ -159,8 +159,4 @@ if __name__ == '__main__':
     fea.set_boundary_conditions()
     fea.set_force_vector(load=10)
     fea.get_displacements()
-
-# with open("parameters.txt", "r") as f:
-#     params = f.readlines()
-#     print(params)
-# print(params)
+    
