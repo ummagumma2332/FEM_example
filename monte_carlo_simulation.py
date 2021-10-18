@@ -57,8 +57,8 @@ class MonteCarloSimulation(FiniteElementsAnalysis):
 
 
         sns.distplot(right_bottom_node_dispY, bins=10)
-        plt.savefig(os.path.join(os.getcwd(), f"pdf_of_{self.n_simulations}_system_evaluations.png"))
-        with open(f"node's_vertical_displacements_{self.n_simulations}.txt", 'w') as f:
+        plt.savefig(os.path.join(os.getcwd(), f"PDF_{self.n_simulations}_simulations.png"))
+        with open(f"Displacements_{self.n_simulations}_simulations.txt", 'w') as f: # save the displacements of the right bottom corner to a .txt
             for item in right_bottom_node_dispY:
                 f.write("%s\n" % item)
 
