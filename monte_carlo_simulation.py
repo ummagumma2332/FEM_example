@@ -53,17 +53,19 @@ class MonteCarloSimulation(FiniteElementsAnalysis):
 
             # Compute the displacement vector
             displacements = np.dot(np.linalg.inv(global_stiffness), self.forces)  # U = K^-1 * P
-            right_bottom_node_dispY.append((displacements[81]))
+            right_bottom_node_dispY.append((displacements[2 * self.n_elemX + 1]))
 
 
         sns.distplot(right_bottom_node_dispY, bins=10)
+        plt.xlabel("Displacement")
+        plt.ylabel("Density")
         plt.savefig(os.path.join(os.getcwd(), f"PDF_{self.n_simulations}_simulations.png"))
         with open(f"Displacements_{self.n_simulations}_simulations.txt", 'w') as f: # save the displacements of the right bottom corner to a .txt
             for item in right_bottom_node_dispY:
                 f.write("%s\n" % item)
 
 if __name__ == '__main__':
-    mc = MonteCarloSimulation(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2, n_simulations=5)
+    mc = MonteCarloSimulation(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2, n_simulations=1000)
       
     mc.rectangular_mesh()
     mc.get_dofs()
