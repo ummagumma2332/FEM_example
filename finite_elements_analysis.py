@@ -54,8 +54,8 @@ class FiniteElementsAnalysis:
         for j in range(len(self.element_nodes)):
             dofs = []
             for i in self.element_nodes[j]:
-                dofs.append(i*2-1)
-                dofs.append(i*2)
+                dofs.append(2 * i - 1)
+                dofs.append(2 * i)
             self.elem_dofs.append(dofs)
         self.elem_dofs = np.array(self.elem_dofs) - 1
     
@@ -72,7 +72,7 @@ class FiniteElementsAnalysis:
             r = a/b
             rho = (1 - self.poisson)/2
             mu = (1 + self.poisson) * 3/2
-            lamda = (1 - 3*self.poisson)/2
+            lamda = (1 - 3 * self.poisson)/2
 
             k = np.zeros((8, 8))
 
