@@ -6,6 +6,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 
 
 class FiniteElementsAnalysis:
@@ -27,6 +28,7 @@ class FiniteElementsAnalysis:
         Method for discretizing the domain using quadrilateral elements. Returns a 2d list of shape (num_of_elements, 4)
         (from book 'MATLAB Codes for Finite Element Analysis' by Ferreira, António J. M., Fantuzzi, Nicholas)
         """
+
         j = 1
         i = 1
         i1 = 0
@@ -47,6 +49,8 @@ class FiniteElementsAnalysis:
             i2 += 1
         self.element_nodes = np.array(self.element_nodes)
 
+
+
     def get_dofs(self):
         '''
         Returns a list with the dofs of an element
@@ -54,10 +58,11 @@ class FiniteElementsAnalysis:
         for j in range(len(self.element_nodes)):
             dofs = []
             for i in self.element_nodes[j]:
-                dofs.append(2 * i - 1)
-                dofs.append(2 * i)
+                dofs.append(i*2-1)
+                dofs.append(i*2)
             self.elem_dofs.append(dofs)
         self.elem_dofs = np.array(self.elem_dofs) - 1
+
     
     def get_element_global_stiffness(self, element_dof, E):
         """
@@ -72,7 +77,7 @@ class FiniteElementsAnalysis:
             r = a/b
             rho = (1 - self.poisson)/2
             mu = (1 + self.poisson) * 3/2
-            lamda = (1 - 3 * self.poisson)/2
+            lamda = (1 - 3*self.poisson)/2
 
             k = np.zeros((8, 8))
 
@@ -117,7 +122,13 @@ class FiniteElementsAnalysis:
         Returns a list which contains the dofs of the left edge of the beam.
         If we want to set different boundary conditions, we should adjust the content of this list to include the dofs we want to constrain.
         """
-        self.constrained_dofs = np.unique(self.elem_dofs[::self.n_elemX][:, [0, 1, -2, -1]])
+        self.constrained_dofs = np.unique(self.elem_dofs[::self.n_elemX][:, [0, 1, -2, -1]]) # constrains the left edge
+        # self.constrained_dofs = np.unique(self.elem_dofs[self.n_elemX-1::self.n_elemX][:, 2:6]) # constrains the right edge
+        # self.constrained_dofs = np.array(sorted(np.concatenate
+        # (
+        #     (np.unique(self.elem_dofs[::self.n_elemX][:, [0, 1, -2, -1]]),
+        #     np.unique(self.elem_dofs[self.n_elemX-1::self.n_elemX][:, 2:6]))))
+        # )
 
     def set_force_vector(self, load):
         """
@@ -125,7 +136,9 @@ class FiniteElementsAnalysis:
         If we want to change the loading condition we should adjust the content of this list to include the dofs we want to carry loads.
         """
         self.forces = np.zeros(self.g_dofs) # Define the external force vector
-        self.forces[-1] = -load             # the load is applied to the last dof - direction to negative y
+        self.forces[-1] = -load # the load is applied to the last dof - direction to negative y
+        # self.forces[-2] = -5 * load
+        # self.forces[-int((2*self.n_elemX + 1) / 2) + 1] = -load  # the load is applied to the middle-point of the upper surface - direction to negative y
 
     def get_displacements(self):
         """
@@ -138,15 +151,31 @@ class FiniteElementsAnalysis:
 
         # Compute the displacement vector
         self.displacements = np.dot(np.linalg.inv(self.global_stiffness), self.forces)  # U = K^-1 * P
-        print(f"Displacement of the bottom right corner of the beam (m):\n{self.displacements[2 * self.n_elemX + 1]}")
-        
-        # Plot the displacement of bottom fiber of the beam
-        plt.plot(np.linspace(0, self.lenX, self.n_elemX + 1), self.displacements[1 : 2*(self.n_elemX + 1) + 1 : 2])
-        plt.title("Bottom fiber displacement")
-        plt.ylabel("Displacement (m)")
-        plt.xlabel("Length")
-        plt.show()
+        self.displacements = self.displacements.reshape(self.n_elemY + 1, self.n_elemX + 1, 2)
+        print(f"Displacement of the bottom right corner of the beam (m):\n{self.displacements[0][-1][1]}")
 
+
+    def mesh_plot(self):
+
+        nx, ny = (self.n_elemX + 1, self.n_elemY + 1)
+
+        x = np.linspace(0, self.lenX, nx)
+        y = np.linspace(0, self.lenY, ny)
+        xv, yv = np.meshgrid(x, y)
+        plt.scatter(xv, yv, marker=".")
+
+        segs1 = np.stack((xv, yv), axis=2)
+        segs2 = segs1.transpose(1,0,2)
+        segs3 = segs1 + self.displacements
+        segs4 = segs2 + self.displacements.transpose(1,0,2)
+
+        plt.gca().add_collection(LineCollection(segs1, colors='C0'))
+        plt.gca().add_collection(LineCollection(segs2, colors='C0'))
+        plt.gca().add_collection(LineCollection(segs3, colors='C3'))
+        plt.gca().add_collection(LineCollection(segs4, colors='C3'))
+        plt.title("Initial vs. Deformed structure")
+        plt.savefig("deformation plot.png")
+        plt.close()
 
 
 if __name__ == '__main__':
@@ -159,4 +188,4 @@ if __name__ == '__main__':
     fea.set_boundary_conditions()
     fea.set_force_vector(load=10)
     fea.get_displacements()
-    
+    fea.mesh_plot()
