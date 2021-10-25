@@ -52,8 +52,9 @@ class MonteCarloSimulation(FiniteElementsAnalysis):
                 global_stiffness[i, i] = 1e10
 
             # Compute the displacement vector
-            displacements = np.dot(np.linalg.inv(global_stiffness), self.forces)  # U = K^-1 * P
-            right_bottom_node_dispY.append((displacements[2 * self.n_elemX + 1]))
+            self.displacements = np.dot(np.linalg.inv(global_stiffness), self.forces)  # U = K^-1 * P
+            self.displacements = self.displacements.reshape(self.n_elemY + 1, self.n_elemX + 1, 2)
+            right_bottom_node_dispY.append((self.displacements[0][-1][1]))
 
 
         sns.distplot(right_bottom_node_dispY, bins=10)
@@ -65,7 +66,7 @@ class MonteCarloSimulation(FiniteElementsAnalysis):
                 f.write("%s\n" % item)
 
 if __name__ == '__main__':
-    mc = MonteCarloSimulation(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2, n_simulations=1000)
+    mc = MonteCarloSimulation(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2, n_simulations=500)
       
     mc.rectangular_mesh()
     mc.get_dofs()
