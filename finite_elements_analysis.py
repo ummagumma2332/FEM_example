@@ -58,8 +58,8 @@ class FiniteElementsAnalysis:
         for j in range(len(self.element_nodes)):
             dofs = []
             for i in self.element_nodes[j]:
-                dofs.append(i*2-1)
-                dofs.append(i*2)
+                dofs.append(2*i - 1)
+                dofs.append(2*i)
             self.elem_dofs.append(dofs)
         self.elem_dofs = np.array(self.elem_dofs) - 1
 
@@ -174,7 +174,7 @@ class FiniteElementsAnalysis:
         plt.gca().add_collection(LineCollection(segs3, colors='C3'))
         plt.gca().add_collection(LineCollection(segs4, colors='C3'))
         plt.title("Initial vs. Deformed structure")
-        plt.savefig("deformation plot.png")
+        plt.savefig("initial_vs_deformed_structure.png")
         plt.close()
 
 
