@@ -66,7 +66,7 @@ class MonteCarloSimulation(FiniteElementsAnalysis):
                 f.write("%s\n" % item)
 
 if __name__ == '__main__':
-    mc = MonteCarloSimulation(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2, n_simulations=500)
+    mc = MonteCarloSimulation(n_elemX=40, n_elemY=10, lenX=4, lenY=1, poisson=0.3, thickness=0.2, n_simulations=1000)
       
     mc.rectangular_mesh()
     mc.get_dofs()
