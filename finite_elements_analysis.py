@@ -168,6 +168,10 @@ class FiniteElementsAnalysis:
         segs2 = segs1.transpose(1,0,2)
         segs3 = segs1 + self.displacements
         segs4 = segs2 + self.displacements.transpose(1,0,2)
+        
+        plt.figure(figsize=(9, 3))
+        plt.xlim(xmin=-0.1, xmax=self.lenX+0.1)
+        plt.ylim(ymin=-0.15, ymax=self.lenY+0.1)
 
         plt.gca().add_collection(LineCollection(segs1, colors='C0'))
         plt.gca().add_collection(LineCollection(segs2, colors='C0'))
